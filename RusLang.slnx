@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RusLang.Pack.Format/RusLang.Pack.Format.csproj" />
+    <Project Path="src/RusLang.Pack.Writer/RusLang.Pack.Writer.csproj" />
+    <Project Path="src/RusLang.Compiler/RusLang.Compiler.csproj" />
+    <Project Path="src/RusLang.RuntimeHost/RusLang.RuntimeHost.csproj" />
+    <Project Path="src/RusLang.Cli/RusLang.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RusLang.Compiler.Tests/RusLang.Compiler.Tests.csproj" />
+    <Project Path="tests/RusLang.Pack.Format.Tests/RusLang.Pack.Format.Tests.csproj" />
+    <Project Path="tests/RusLang.Pack.Writer.Tests/RusLang.Pack.Writer.Tests.csproj" />
+    <Project Path="tests/RusLang.RuntimeHost.Tests/RusLang.RuntimeHost.Tests.csproj" />
+  </Folder>
+</Solution>

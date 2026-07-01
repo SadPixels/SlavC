@@ -1,0 +1,20 @@
+[CmdletBinding()]
+param(
+    [ValidateSet('Debug', 'Release')]
+    [string] $Configuration = 'Release',
+    [string] $Rid = 'win-x64'
+)
+
+$ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $PSScriptRoot
+$artifacts = Join-Path $root 'artifacts'
+$hostOutput = Join-Path $artifacts "host-templates/$Rid"
+$compilerOutput = Join-Path $artifacts "rusc/$Rid"
+
+dotnet restore (Join-Path $root 'RusLang.slnx')
+dotnet build (Join-Path $root 'RusLang.slnx') -c $Configuration --no-restore
+dotnet test (Join-Path $root 'RusLang.slnx') -c $Configuration --no-build
+dotnet publish (Join-Path $root 'src/RusLang.RuntimeHost/RusLang.RuntimeHost.csproj') `
+    -c $Configuration -r $Rid --self-contained true -o $hostOutput
+dotnet publish (Join-Path $root 'src/RusLang.Cli/RusLang.Cli.csproj') `
+    -c $Configuration -r $Rid --self-contained true -o $compilerOutput

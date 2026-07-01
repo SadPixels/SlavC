@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d
+        with:
+          dotnet-version: 10.0.300
+      - shell: pwsh
+        run: ./eng/build.ps1
+      - shell: pwsh
+        run: |
+          $rusc = './artifacts/rusc/win-x64/rusc.exe'
+          & $rusc build ./examples/hello.rus -o ./artifacts/test-output/hello --force
+          & ./artifacts/test-output/hello.exe
+          & $rusc verify ./artifacts/test-output/hello.exe
