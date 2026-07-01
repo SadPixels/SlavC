@@ -16,7 +16,7 @@ function Invoke-Checked {
 
     & $Command
     if ($LASTEXITCODE -ne 0) {
-        throw "Повелѣніе не удалось съ кодомъ $LASTEXITCODE: $Command"
+        throw "Повелѣніе не удалось съ кодомъ ${LASTEXITCODE}: $Command"
     }
 }
 
