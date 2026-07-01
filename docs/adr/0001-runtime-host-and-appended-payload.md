@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-`rusc build` must produce one RID-specific executable without invoking the .NET SDK,
+`rusc собрать` must produce one RID-specific executable without invoking the .NET SDK,
 MSBuild, NuGet, or user code. Editing PE, ELF, and Mach-O structures independently
 would create three security-sensitive writers.
 

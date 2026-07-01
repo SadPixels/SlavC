@@ -18,7 +18,9 @@ public sealed class RusPackWriter : IRuntimeImageWriter
 
         if (File.Exists(outputPath) && !request.Force)
         {
-            throw new IOException($"Output '{outputPath}' already exists. Use --force to replace it.");
+            throw new IOException(
+                $"Выходной файл «{outputPath}» уже существует. " +
+                "Для замены используйте --перезаписать.");
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);

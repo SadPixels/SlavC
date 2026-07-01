@@ -32,13 +32,13 @@ internal static class Program
 
         return args[0] switch
         {
-            "version" or "--version" => Version(),
-            "doctor" => Doctor(),
-            "inspect" when args.Length == 2 => Inspect(args[1]),
-            "verify" when args.Length == 2 => Verify(args[1]),
-            "reveal" when args.Length >= 2 => Reveal(args[1]),
-            "build" when args.Length >= 2 => Build(args[1], args[2..]),
-            "run" when args.Length >= 2 => RunProgram(args[1], args[2..]),
+            "версия" or "--версия" => Version(),
+            "здравие" => Doctor(),
+            "осмотреть" when args.Length == 2 => Inspect(args[1]),
+            "проверить" when args.Length == 2 => Verify(args[1]),
+            "раскрыть" when args.Length >= 2 => Reveal(args[1]),
+            "собрать" when args.Length >= 2 => Build(args[1], args[2..]),
+            "запустить" when args.Length >= 2 => RunProgram(args[1], args[2..]),
             _ => UnknownCommand(),
         };
     }
@@ -48,7 +48,8 @@ internal static class Program
         if (!sourcePath.EndsWith(".rus", StringComparison.OrdinalIgnoreCase) ||
             !File.Exists(sourcePath))
         {
-            throw new ArgumentException($"RUSC1002: Source file '{sourcePath}' was not found or is not .rus.");
+            throw new ArgumentException(
+                $"RUSC1002: Исходный файл «{sourcePath}» не найден или имеет расширение не .rus.");
         }
 
         var options = BuildOptions.Parse(sourcePath, arguments);
@@ -109,7 +110,8 @@ internal static class Program
             options.Rid,
             entries,
             Compress: !options.NoCompress,
-            Force: options.Force));
+            Force: options.Force,
+            CompilerVersion: GetVersion()));
         var actualOutput = NormalizeOutput(options.OutputPath, options.Rid);
         Console.WriteLine(
             $"Создано: {Path.GetFullPath(actualOutput)} ({options.Rid}, {new FileInfo(actualOutput).Length} байт)");
@@ -135,7 +137,7 @@ internal static class Program
         try
         {
             var output = Path.Combine(temporaryDirectory, "program");
-            buildArguments = [.. buildArguments, "-o", output, "--force"];
+            buildArguments = [.. buildArguments, "--выход", output, "--перезаписать"];
             var buildExitCode = Build(sourcePath, buildArguments);
             if (buildExitCode != 0)
             {
@@ -147,7 +149,8 @@ internal static class Program
             {
                 UseShellExecute = false,
                 Arguments = string.Join(" ", programArguments.Select(QuoteArgument)),
-            }) ?? throw new InvalidOperationException("RUSC1003: Failed to start compiled program.");
+            }) ?? throw new InvalidOperationException(
+                "RUSC1003: Не удалось запустить собранную программу.");
             process.WaitForExit();
             return process.ExitCode;
         }
@@ -165,13 +168,13 @@ internal static class Program
 
     private static int Doctor()
     {
-        Console.WriteLine($"compiler: {GetVersion()}");
-        Console.WriteLine("language: 0.1");
-        Console.WriteLine("tfm: net10.0");
-        Console.WriteLine($"compiler-rid: {RuntimeInformation.RuntimeIdentifier}");
-        Console.WriteLine($"ruspack: {RusPackVersion.Current}");
-        Console.WriteLine($"host-protocol: {RusPackConstants.RuntimeHostProtocol}");
-        Console.WriteLine($"reference-assemblies: {ReferencePackLoader.Load().Count}");
+        Console.WriteLine($"компилятор: {GetVersion()}");
+        Console.WriteLine("язык: 0.1");
+        Console.WriteLine("целевая-среда: net10.0");
+        Console.WriteLine($"платформа-компилятора: {RuntimeInformation.RuntimeIdentifier}");
+        Console.WriteLine($"формат-ruspack: {RusPackVersion.Current}");
+        Console.WriteLine($"протокол-запуска: {RusPackConstants.RuntimeHostProtocol}");
+        Console.WriteLine($"встроенные-ссылки: {ReferencePackLoader.Load().Count}");
         return 0;
     }
 
@@ -180,10 +183,12 @@ internal static class Program
         using var reader = RusPackReader.OpenExecutable(path);
         var manifest = reader.Manifest;
         Console.WriteLine($"{manifest.ApplicationName} ({manifest.TargetRid}, {manifest.TargetFramework})");
-        Console.WriteLine($"entry: {manifest.EntryAssembly}");
+        Console.WriteLine($"вход: {manifest.EntryAssembly}");
         foreach (var entry in manifest.Entries)
         {
-            Console.WriteLine($"{entry.Kind,-18} {entry.OriginalLength,10} {entry.Compression,-6} {entry.Name}");
+            Console.WriteLine(
+                $"{TranslateEntryKind(entry.Kind),-22} {entry.OriginalLength,10} " +
+                $"{TranslateCompression(entry.Compression),-6} {entry.Name}");
         }
 
         return 0;
@@ -193,7 +198,7 @@ internal static class Program
     {
         using var reader = RusPackReader.OpenExecutable(path);
         reader.VerifyAllEntries();
-        Console.WriteLine($"OK: {Path.GetFullPath(path)}");
+        Console.WriteLine($"ИСПРАВЕН: {Path.GetFullPath(path)}");
         return 0;
     }
 
@@ -203,19 +208,49 @@ internal static class Program
         {
             Console.Error.WriteLine(
                 $"{diagnostic.File}({diagnostic.Line},{diagnostic.Column}): " +
-                $"{diagnostic.Severity.ToString().ToLowerInvariant()} {diagnostic.Code}: {diagnostic.Message}");
+                $"{TranslateSeverity(diagnostic.Severity)} {diagnostic.Code}: {diagnostic.Message}");
         }
     }
 
     private static int UnknownCommand()
     {
-        Console.Error.WriteLine("RUSC1001: Unknown or incomplete command.");
+        Console.Error.WriteLine("RUSC1001: Неизвестная или неполная команда.");
         PrintUsage();
         return 2;
     }
 
-    private static string GetVersion() =>
-        Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.1.0";
+    private static string GetVersion()
+    {
+        var informationalVersion = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        return informationalVersion?.Split('+', 2)[0]
+            ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+            ?? "0.1.0";
+    }
+
+    private static string TranslateSeverity(RusDiagnosticSeverity severity) =>
+        severity switch
+        {
+            RusDiagnosticSeverity.Error => "ошибка",
+            RusDiagnosticSeverity.Warning => "предупреждение",
+            _ => "сведения",
+        };
+
+    private static string TranslateEntryKind(RusPackEntryKind kind) =>
+        kind switch
+        {
+            RusPackEntryKind.MainAssembly => "главная-сборка",
+            RusPackEntryKind.ManagedAssembly => "управляемая-сборка",
+            RusPackEntryKind.PortablePdb => "отладочные-символы",
+            RusPackEntryKind.Resource => "ресурс",
+            RusPackEntryKind.SatelliteAssembly => "спутниковая-сборка",
+            RusPackEntryKind.NativeLibrary => "нативная-библиотека",
+            _ => kind.ToString(),
+        };
+
+    private static string TranslateCompression(RusPackCompression compression) =>
+        compression == RusPackCompression.None ? "нет" : "brotli";
 
     private static string NormalizeOutput(string path, string rid) =>
         rid.StartsWith("win-", StringComparison.Ordinal) &&
@@ -228,7 +263,8 @@ internal static class Program
 
     private static void PrintUsage() =>
         Console.WriteLine(
-            "Usage: rusc <build|run|reveal|inspect|verify|doctor|version> [arguments]");
+            "Использование: rusc " +
+            "<собрать|запустить|раскрыть|осмотреть|проверить|здравие|версия> [аргументы]");
 
     private sealed record BuildOptions(
         string OutputPath,
@@ -258,22 +294,31 @@ internal static class Program
             {
                 string NextValue() => ++index < arguments.Length
                     ? arguments[index]
-                    : throw new ArgumentException("RUSC1004: Missing option value.");
+                    : throw new ArgumentException("RUSC1004: Не указано значение параметра.");
                 switch (arguments[index])
                 {
-                    case "-o" or "--output": output = NextValue(); break;
-                    case "-r" or "--rid": rid = NextValue(); break;
-                    case "-c" or "--configuration":
-                        debug = string.Equals(NextValue(), "debug", StringComparison.OrdinalIgnoreCase);
+                    case "-в" or "--выход": output = NextValue(); break;
+                    case "-ц" or "--цель": rid = NextValue(); break;
+                    case "-р" or "--режим":
+                        var configuration = NextValue();
+                        debug = configuration.ToLowerInvariant() switch
+                        {
+                            "отладка" => true,
+                            "выпуск" => false,
+                            _ => throw new ArgumentException(
+                                "RUSC1006: Режим должен быть «отладка» или «выпуск»."),
+                        };
                         break;
-                    case "--reference": references.Add(NextValue()); break;
-                    case "--host-template": host = NextValue(); break;
-                    case "--no-compress": noCompress = true; break;
-                    case "--keep-pdb": keepPdb = true; break;
-                    case "--emit-intermediate": emitIntermediate = true; break;
-                    case "--force": force = true; break;
-                    case "--deterministic" or "--verbose": break;
-                    default: throw new ArgumentException($"RUSC1005: Unknown option '{arguments[index]}'.");
+                    case "--ссылка": references.Add(NextValue()); break;
+                    case "--основа": host = NextValue(); break;
+                    case "--без-сжатия": noCompress = true; break;
+                    case "--сохранить-отладку": keepPdb = true; break;
+                    case "--раскрыть-код": emitIntermediate = true; break;
+                    case "--перезаписать": force = true; break;
+                    case "--повторяемо" or "--подробно": break;
+                    default:
+                        throw new ArgumentException(
+                            $"RUSC1005: Неизвестный параметр «{arguments[index]}».");
                 }
             }
 
@@ -300,8 +345,8 @@ internal static class Program
             if (stream is null)
             {
                 throw new FileNotFoundException(
-                    $"RUSC2004: Host template for '{rid}' is not bundled. " +
-                    "Set RUSLANG_HOST_TEMPLATE or install rusc-full.");
+                    $"RUSC2004: Основа запуска для «{rid}» не встроена. " +
+                    "Задайте RUSLANG_HOST_TEMPLATE или установите полный rusc.");
             }
 
             var directory = Path.Combine(Path.GetTempPath(), "RusLang", "host-templates");

@@ -20,6 +20,6 @@ jobs:
       - shell: pwsh
         run: |
           $rusc = './artifacts/rusc/win-x64/rusc.exe'
-          & $rusc build ./examples/hello.rus -o ./artifacts/test-output/hello --force
+          & $rusc собрать ./examples/hello.rus --выход ./artifacts/test-output/hello --перезаписать
           & ./artifacts/test-output/hello.exe
-          & $rusc verify ./artifacts/test-output/hello.exe
+          & $rusc проверить ./artifacts/test-output/hello.exe

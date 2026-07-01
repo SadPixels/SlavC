@@ -1,0 +1,93 @@
+name: выпуск
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  win-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d
+        with:
+          dotnet-version: 10.0.300
+
+      - name: Проверить тег и собрать автономный компилятор
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          if ($tag -notmatch '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') {
+              throw "Неверный формат тега: $tag"
+          }
+          $version = $tag.Substring(1)
+          ./eng/build.ps1 -Configuration Release -Rid win-x64 -Version $version
+
+      - name: Проверить работу без dotnet
+        shell: pwsh
+        run: |
+          $rusc = (Resolve-Path './artifacts/rusc/win-x64/rusc.exe').Path
+          $program = (Join-Path $env:RUNNER_TEMP 'ruslang-standalone')
+          $savedPath = $env:PATH
+          try {
+              $env:DOTNET_ROOT = Join-Path $env:RUNNER_TEMP 'dotnet-does-not-exist'
+              $env:DOTNET_ROOT_X64 = $env:DOTNET_ROOT
+              $env:DOTNET_MULTILEVEL_LOOKUP = '0'
+              $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+
+              & $rusc версия
+              if ($LASTEXITCODE -ne 0) { throw 'Автономный rusc не запустился.' }
+
+              & $rusc собрать ./examples/hello.rus --выход $program --перезаписать
+              if ($LASTEXITCODE -ne 0) { throw 'Автономная компиляция не удалась.' }
+
+              & "$program.exe"
+              if ($LASTEXITCODE -ne 0) { throw 'Собранный exe не запустился автономно.' }
+
+              & $rusc проверить "$program.exe"
+              if ($LASTEXITCODE -ne 0) { throw 'Проверка собранного exe не удалась.' }
+          }
+          finally {
+              $env:PATH = $savedPath
+          }
+
+      - name: Подготовить файлы выпуска
+        id: package
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $name = "rusc-$tag-win-x64"
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP $name
+          New-Item -ItemType Directory -Path $releaseDirectory | Out-Null
+          Copy-Item './artifacts/rusc/win-x64/rusc.exe' $releaseDirectory
+          Copy-Item './README.md' $releaseDirectory
+
+          $archive = Join-Path $env:RUNNER_TEMP "$name.zip"
+          Compress-Archive -Path "$releaseDirectory/*" -DestinationPath $archive
+          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          $checksum = Join-Path $env:RUNNER_TEMP 'SHA256SUMS.txt'
+          "$hash *$name.zip" | Set-Content -Encoding ascii $checksum
+
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+          "checksum=$checksum" >> $env:GITHUB_OUTPUT
+
+      - name: Создать предварительный выпуск GitHub
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+              '${{ steps.package.outputs.archive }}' `
+              '${{ steps.package.outputs.checksum }}' `
+              --repo '${{ github.repository }}' `
+              --verify-tag `
+              --prerelease `
+              --generate-notes `
+              --title "RusLang ${{ github.ref_name }}"

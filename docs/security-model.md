@@ -2,7 +2,7 @@
 
 The compiler parses and emits user code but never executes it, reflection-loads it,
 or invokes MSBuild, NuGet scripts, analyzers, source generators, a shell, `csc`, or
-`dotnet` during `rusc build`. Explicit managed references are consumed as metadata.
+`dotnet` during `rusc собрать`. Explicit managed references are consumed as metadata.
 
 The manifest is untrusted. Reader validation covers footer CRC, all arithmetic and
 bounds, overlap, count and size limits, payload and entry SHA-256, safe logical
