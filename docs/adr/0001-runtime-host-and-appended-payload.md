@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-`rusc собрать` must produce one RID-specific executable without invoking the .NET SDK,
+`slavc сотворити` must produce one RID-specific executable without invoking the .NET SDK,
 MSBuild, NuGet, or user code. Editing PE, ELF, and Mach-O structures independently
 would create three security-sensitive writers.
 
@@ -12,7 +12,7 @@ would create three security-sensitive writers.
 
 Release tooling publishes and tests a self-contained, single-file RuntimeHost for
 each supported RID. The compiler copies that immutable template and appends a
-platform-neutral RusPack container. A fixed footer at end-of-file locates and
+platform-neutral SlavPack container. A fixed footer at end-of-file locates and
 authenticates the manifest and payload. Platform signing is performed only after
 packing.
 
@@ -24,6 +24,6 @@ sidecar files are not an accepted fallback.
 
 ## Versioning
 
-Language, compiler, RusPack format, RuntimeHost protocol, TFM, and runtime patch
-versions evolve independently. Unknown RusPack major versions are rejected.
-Newer minor versions are accepted only when all required feature flags are known.
+Language, compiler, SlavPack format, RuntimeHost protocol, TFM, and runtime patch
+вѣстьs evolve independently. Unknown SlavPack major вѣстьs are rejected.
+Newer minor вѣстьs are accepted only when all required feature flags are known.

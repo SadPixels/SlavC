@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>slavc</AssemblyName>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../SlavLang.Compiler/SlavLang.Compiler.csproj" />
+    <ProjectReference Include="../SlavLang.Pack.Format/SlavLang.Pack.Format.csproj" />
+    <ProjectReference Include="../SlavLang.Pack.Writer/SlavLang.Pack.Writer.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(NetCoreTargetingPackRoot)\Microsoft.NETCore.App.Ref\10.0.8\ref\net10.0\*.dll">
+      <LogicalName>SlavLang.ReferencePack.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup Condition="Exists('../../artifacts/host-templates/win-x64/SlavLang.RuntimeHost.exe')">
+    <EmbeddedResource Include="../../artifacts/host-templates/win-x64/SlavLang.RuntimeHost.exe">
+      <LogicalName>SlavLang.HostTemplates.win-x64.exe</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

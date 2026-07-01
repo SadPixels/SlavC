@@ -5,7 +5,7 @@ Runtime: .NET 10.0.8
 RID tested: win-x64
 
 A self-contained single-file RuntimeHost was published and used as the byte prefix
-of a RusPack executable. A Brotli-compressed managed assembly, JSON manifest, and
+of a SlavPack executable. A Brotli-compressed managed assembly, JSON manifest, and
 fixed footer were appended. The resulting 73,455,164-byte executable started,
 loaded the assembly from memory, printed Cyrillic output, and returned exit code 0.
 Rename-independent lookup is implemented through `Environment.ProcessPath`.

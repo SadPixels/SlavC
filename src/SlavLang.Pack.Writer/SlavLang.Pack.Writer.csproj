@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../SlavLang.Pack.Format/SlavLang.Pack.Format.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SlavLang.Pack.Format/SlavLang.Pack.Format.csproj" />
+    <Project Path="src/SlavLang.Pack.Writer/SlavLang.Pack.Writer.csproj" />
+    <Project Path="src/SlavLang.Compiler/SlavLang.Compiler.csproj" />
+    <Project Path="src/SlavLang.RuntimeHost/SlavLang.RuntimeHost.csproj" />
+    <Project Path="src/SlavLang.Cli/SlavLang.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SlavLang.Compiler.Tests/SlavLang.Compiler.Tests.csproj" />
+    <Project Path="tests/SlavLang.Pack.Format.Tests/SlavLang.Pack.Format.Tests.csproj" />
+    <Project Path="tests/SlavLang.Pack.Writer.Tests/SlavLang.Pack.Writer.Tests.csproj" />
+    <Project Path="tests/SlavLang.RuntimeHost.Tests/SlavLang.RuntimeHost.Tests.csproj" />
+  </Folder>
+</Solution>

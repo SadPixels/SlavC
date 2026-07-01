@@ -1,6 +1,6 @@
 # RuntimeHost
 
-RuntimeHost uses `Environment.ProcessPath`, validates RusPack before allocating or
+RuntimeHost uses `Environment.ProcessPath`, validates SlavPack before allocating or
 loading assemblies, and loads managed entries directly from memory. It does not
 change the current directory or redirect standard streams. Supported entry-point
 returns are `void`, `int`, `Task`, and `Task<int>`, with optional `string[] args`.

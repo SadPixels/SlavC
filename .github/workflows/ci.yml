@@ -19,7 +19,7 @@ jobs:
         run: ./eng/build.ps1
       - shell: pwsh
         run: |
-          $rusc = './artifacts/rusc/win-x64/rusc.exe'
-          & $rusc собрать ./examples/hello.rus --выход ./artifacts/test-output/hello --перезаписать
+          $slavc = './artifacts/slavc/win-x64/slavc.exe'
+          & $slavc сотворити ./examples/hello.slav -o ./artifacts/test-output/hello --force
           & ./artifacts/test-output/hello.exe
-          & $rusc проверить ./artifacts/test-output/hello.exe
+          & $slavc увѣрити ./artifacts/test-output/hello.exe
