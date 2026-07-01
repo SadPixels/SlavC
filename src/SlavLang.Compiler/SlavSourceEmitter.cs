@@ -414,7 +414,6 @@ public static partial class SlavSourceEmitter
                     "останъкъ" => "%",
                     "паче" => ">",
                     "менши" => "<",
-                    "равно" => "==",
                     _ => word,
                 });
                 continue;

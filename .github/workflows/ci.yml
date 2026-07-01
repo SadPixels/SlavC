@@ -20,6 +20,6 @@ jobs:
       - shell: pwsh
         run: |
           $slavc = './artifacts/slavc/win-x64/slavc.exe'
-          & $slavc сотворити ./examples/hello.slav -o ./artifacts/test-output/hello --force
+          & $slavc сътворити ./examples/hello.slav --изходъ ./artifacts/test-output/hello --переписати
           & ./artifacts/test-output/hello.exe
           & $slavc увѣрити ./artifacts/test-output/hello.exe

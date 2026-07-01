@@ -12,4 +12,4 @@ decompressed entry. Names are relative logical paths using `/`; absolute paths,
 empty segments, `.` and `..` are invalid.
 
 Format v1 supports uncompressed and Brotli-compressed entries. Native library
-entries and signed manifests are reserved and are not supported by the MVP.
+entries and signed manifests are reserved for a later SlavPack rite.

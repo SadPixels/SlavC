@@ -33,11 +33,11 @@ internal static class Program
         return args[0] switch
         {
             "вѣсть" or "--вѣсть" => Version(),
-            "лекарь" => Doctor(),
+            "здравіе" => Doctor(),
             "зрѣти" when args.Length == 2 => Inspect(args[1]),
             "увѣрити" when args.Length == 2 => Verify(args[1]),
             "явити" when args.Length >= 2 => Reveal(args[1]),
-            "сотворити" when args.Length >= 2 => Build(args[1], args[2..]),
+            "сътворити" when args.Length >= 2 => Build(args[1], args[2..]),
             "бѣжати" when args.Length >= 2 => RunProgram(args[1], args[2..]),
             _ => UnknownCommand(),
         };
@@ -48,7 +48,8 @@ internal static class Program
         if (!sourcePath.EndsWith(".slav", StringComparison.OrdinalIgnoreCase) ||
             !File.Exists(sourcePath))
         {
-            throw new ArgumentException($"SLAVC1002: Source file '{sourcePath}' was not found or is not .slav.");
+            throw new ArgumentException(
+                $"SLAVC1002: Писаніе «{sourcePath}» не обрѣтеся или не имать окончанія .slav.");
         }
 
         var options = BuildOptions.Parse(sourcePath, arguments);
@@ -109,10 +110,11 @@ internal static class Program
             options.Rid,
             entries,
             Compress: !options.NoCompress,
-            Force: options.Force));
+            Force: options.Force,
+            CompilerVersion: GetVersion()));
         var actualOutput = NormalizeOutput(options.OutputPath, options.Rid);
         Console.WriteLine(
-            $"Создано: {Path.GetFullPath(actualOutput)} ({options.Rid}, {new FileInfo(actualOutput).Length} байт)");
+            $"Сътворено: {Path.GetFullPath(actualOutput)} ({options.Rid}, {new FileInfo(actualOutput).Length} баитовъ)");
         return 0;
     }
 
@@ -128,18 +130,18 @@ internal static class Program
     private static int RunProgram(string sourcePath, string[] arguments)
     {
         var separator = Array.IndexOf(arguments, "--");
-        var сотворитиArguments = separator < 0 ? arguments : arguments[..separator];
+        var buildArguments = separator < 0 ? arguments : arguments[..separator];
         var programArguments = separator < 0 ? [] : arguments[(separator + 1)..];
         var temporaryDirectory = Path.Combine(Path.GetTempPath(), "SlavLang", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporaryDirectory);
         try
         {
             var output = Path.Combine(temporaryDirectory, "program");
-            сотворитиArguments = [.. сотворитиArguments, "-o", output, "--force"];
-            var сотворитиExitCode = Build(sourcePath, сотворитиArguments);
-            if (сотворитиExitCode != 0)
+            buildArguments = [.. buildArguments, "--изходъ", output, "--переписати"];
+            var buildExitCode = Build(sourcePath, buildArguments);
+            if (buildExitCode != 0)
             {
-                return сотворитиExitCode;
+                return buildExitCode;
             }
 
             var executable = NormalizeOutput(output, RuntimeInformation.RuntimeIdentifier);
@@ -147,7 +149,7 @@ internal static class Program
             {
                 UseShellExecute = false,
                 Arguments = string.Join(" ", programArguments.Select(QuoteArgument)),
-            }) ?? throw new InvalidOperationException("SLAVC1003: Failed to start compiled program.");
+            }) ?? throw new InvalidOperationException("SLAVC1003: Не можахъ пустити сътворену программу.");
             process.WaitForExit();
             return process.ExitCode;
         }
@@ -165,13 +167,13 @@ internal static class Program
 
     private static int Doctor()
     {
-        Console.WriteLine($"compiler: {GetVersion()}");
-        Console.WriteLine("language: 0.1");
-        Console.WriteLine("tfm: net10.0");
-        Console.WriteLine($"compiler-rid: {RuntimeInformation.RuntimeIdentifier}");
-        Console.WriteLine($"slavpack: {SlavPackVersion.Current}");
-        Console.WriteLine($"host-protocol: {SlavPackConstants.RuntimeHostProtocol}");
-        Console.WriteLine($"reference-assemblies: {ReferencePackLoader.Load().Count}");
+        Console.WriteLine($"съставникъ: {GetVersion()}");
+        Console.WriteLine("ѩзыкъ: 0.1");
+        Console.WriteLine("цѣльная-среда: net10.0");
+        Console.WriteLine($"платформа-съставника: {RuntimeInformation.RuntimeIdentifier}");
+        Console.WriteLine($"строй-slavpack: {SlavPackVersion.Current}");
+        Console.WriteLine($"чинъ-запуска: {SlavPackConstants.RuntimeHostProtocol}");
+        Console.WriteLine($"въстроены-съсылки: {ReferencePackLoader.Load().Count}");
         return 0;
     }
 
@@ -180,10 +182,12 @@ internal static class Program
         using var reader = SlavPackReader.OpenExecutable(path);
         var manifest = reader.Manifest;
         Console.WriteLine($"{manifest.ApplicationName} ({manifest.TargetRid}, {manifest.TargetFramework})");
-        Console.WriteLine($"entry: {manifest.EntryAssembly}");
+        Console.WriteLine($"входъ: {manifest.EntryAssembly}");
         foreach (var entry in manifest.Entries)
         {
-            Console.WriteLine($"{entry.Kind,-18} {entry.OriginalLength,10} {entry.Compression,-6} {entry.Name}");
+            Console.WriteLine(
+                $"{TranslateEntryKind(entry.Kind),-24} {entry.OriginalLength,10} " +
+                $"{TranslateCompression(entry.Compression),-6} {entry.Name}");
         }
 
         return 0;
@@ -193,7 +197,7 @@ internal static class Program
     {
         using var reader = SlavPackReader.OpenExecutable(path);
         reader.VerifyAllEntries();
-        Console.WriteLine($"OK: {Path.GetFullPath(path)}");
+        Console.WriteLine($"ИСПРАВЕНЪ: {Path.GetFullPath(path)}");
         return 0;
     }
 
@@ -203,19 +207,47 @@ internal static class Program
         {
             Console.Error.WriteLine(
                 $"{diagnostic.File}({diagnostic.Line},{diagnostic.Column}): " +
-                $"{diagnostic.Severity.ToString().ToLowerInvariant()} {diagnostic.Code}: {diagnostic.Message}");
+                $"{TranslateSeverity(diagnostic.Severity)} {diagnostic.Code}: {diagnostic.Message}");
         }
     }
 
     private static int UnknownCommand()
     {
-        Console.Error.WriteLine("SLAVC1001: Unknown or incomplete command.");
+        Console.Error.WriteLine("SLAVC1001: Невѣдома или неполна повелѣнь.");
         PrintUsage();
         return 2;
     }
 
-    private static string GetVersion() =>
-        Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.1.0";
+    private static string GetVersion()
+    {
+        var informationalVersion = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        return informationalVersion?.Split('+', 2)[0]
+            ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+            ?? "0.1.0";
+    }
+
+    private static string TranslateSeverity(SlavDiagnosticSeverity severity) => severity switch
+    {
+        SlavDiagnosticSeverity.Error => "погрѣхъ",
+        SlavDiagnosticSeverity.Warning => "остереженіе",
+        _ => "вѣдомость",
+    };
+
+    private static string TranslateEntryKind(SlavPackEntryKind kind) => kind switch
+    {
+        SlavPackEntryKind.MainAssembly => "главна-съборка",
+        SlavPackEntryKind.ManagedAssembly => "управима-съборка",
+        SlavPackEntryKind.PortablePdb => "отладочны-знамѧна",
+        SlavPackEntryKind.Resource => "источникъ",
+        SlavPackEntryKind.SatelliteAssembly => "спутна-съборка",
+        SlavPackEntryKind.NativeLibrary => "родна-книжица",
+        _ => kind.ToString(),
+    };
+
+    private static string TranslateCompression(SlavPackCompression compression) =>
+        compression == SlavPackCompression.None ? "нѣтъ" : "brotli";
 
     private static string NormalizeOutput(string path, string rid) =>
         rid.StartsWith("win-", StringComparison.Ordinal) &&
@@ -228,7 +260,7 @@ internal static class Program
 
     private static void PrintUsage() =>
         Console.WriteLine(
-            "Usage: slavc <сотворити|бѣжати|явити|зрѣти|увѣрити|лекарь|вѣсть> [arguments]");
+            "Употреба: slavc <сътворити|бѣжати|явити|зрѣти|увѣрити|здравіе|вѣсть> [реченія]");
 
     private sealed record BuildOptions(
         string OutputPath,
@@ -258,22 +290,47 @@ internal static class Program
             {
                 string NextValue() => ++index < arguments.Length
                     ? arguments[index]
-                    : throw new ArgumentException("SLAVC1004: Missing option value.");
+                    : throw new ArgumentException("SLAVC1004: Не дано значеніе къ знамені.");
                 switch (arguments[index])
                 {
-                    case "-o" or "--output": output = NextValue(); break;
-                    case "-r" or "--rid": rid = NextValue(); break;
-                    case "-c" or "--configuration":
-                        debug = string.Equals(NextValue(), "debug", StringComparison.OrdinalIgnoreCase);
+                    case "-и" or "--изходъ":
+                        output = NextValue();
                         break;
-                    case "--reference": references.Add(NextValue()); break;
-                    case "--host-template": host = NextValue(); break;
-                    case "--no-compress": noCompress = true; break;
-                    case "--keep-pdb": keepPdb = true; break;
-                    case "--emit-intermediate": emitIntermediate = true; break;
-                    case "--force": force = true; break;
-                    case "--deterministic" or "--verbose": break;
-                    default: throw new ArgumentException($"SLAVC1005: Unknown option '{arguments[index]}'.");
+                    case "-ц" or "--цѣль":
+                        rid = NextValue();
+                        break;
+                    case "-о" or "--образъ":
+                        var configuration = NextValue();
+                        debug = configuration.ToLowerInvariant() switch
+                        {
+                            "испытъ" => true,
+                            "выпускъ" => false,
+                            _ => throw new ArgumentException(
+                                "SLAVC1006: Образъ да будет «испытъ» или «выпускъ»."),
+                        };
+                        break;
+                    case "--съсылка":
+                        references.Add(NextValue());
+                        break;
+                    case "--основа":
+                        host = NextValue();
+                        break;
+                    case "--безъ-сжатия":
+                        noCompress = true;
+                        break;
+                    case "--сохранити-отладку":
+                        keepPdb = true;
+                        break;
+                    case "--явити-кодъ":
+                        emitIntermediate = true;
+                        break;
+                    case "--переписати":
+                        force = true;
+                        break;
+                    case "--повторяемо" or "--подробно":
+                        break;
+                    default:
+                        throw new ArgumentException($"SLAVC1005: Невѣдомо знамѧ «{arguments[index]}».");
                 }
             }
 
@@ -300,8 +357,8 @@ internal static class Program
             if (stream is null)
             {
                 throw new FileNotFoundException(
-                    $"SLAVC2004: Host template for '{rid}' is not bundled. " +
-                    "Set SLAVLANG_HOST_TEMPLATE or install slavc-full.");
+                    $"SLAVC2004: Основа запуска для «{rid}» не въложена. " +
+                    "Поставь SLAVLANG_HOST_TEMPLATE или полный slavc.");
             }
 
             var directory = Path.Combine(Path.GetTempPath(), "SlavLang", "host-templates");
@@ -329,7 +386,7 @@ internal static class Program
             }
             catch (IOException) when (File.Exists(path))
             {
-                // Another compiler process won the atomic extraction race.
+                // Иный съставникъ прежде извлѣче основу запуска.
             }
             finally
             {

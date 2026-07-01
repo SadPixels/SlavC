@@ -13,12 +13,12 @@ public sealed class SlavPackWriter : IRuntimeImageWriter
         var hostPath = Path.GetFullPath(request.HostTemplatePath);
         if (string.Equals(outputPath, hostPath, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException("Output must not overwrite the host template.", nameof(request));
+            throw new ArgumentException("Исходъ не долженъ переписати основу запуска.", nameof(request));
         }
 
         if (File.Exists(outputPath) && !request.Force)
         {
-            throw new IOException($"Output '{outputPath}' already exists. Use --force to replace it.");
+            throw new IOException($"Исходъ '{outputPath}' уже есть. Употреби --переписати, дабы замѣнити его.");
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
@@ -31,7 +31,7 @@ public sealed class SlavPackWriter : IRuntimeImageWriter
                 if (!string.Equals(reader.Manifest.TargetRid, request.TargetRid, StringComparison.Ordinal) ||
                     reader.Manifest.RuntimeHostProtocol != SlavPackConstants.RuntimeHostProtocol)
                 {
-                    throw new SlavPackFormatException("SLAP1100: Self-verification metadata mismatch.");
+                    throw new SlavPackFormatException("SLAP1100: Самопровѣрка метаданныхъ не сошлась.");
                 }
 
                 reader.VerifyAllEntries();

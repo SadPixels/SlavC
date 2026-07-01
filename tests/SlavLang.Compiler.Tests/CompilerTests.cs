@@ -127,7 +127,6 @@ public sealed class CompilerTests : IDisposable
     }
 
     [Theory]
-    [InlineData("a равно b", "if (a == b)")]
     [InlineData("a воистину b", "if (a == b)")]
     [InlineData("a не єсть b", "if (a != b)")]
     [InlineData("a се не b", "if (a != b)")]
