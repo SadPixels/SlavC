@@ -3,7 +3,7 @@
 Layout: `[host][entries][UTF-8 JSON manifest][128-byte footer]`.
 
 All integers and absolute offsets are little-endian. The footer begins with
-`SLAVPACK\0`; no scanning is permitted. CRC-32 authenticates the footer before the
+`SLAVPAK\0`; no scanning is permitted. CRC-32 authenticates the footer before the
 manifest is allocated. SHA-256 authenticates the stored entry region. Each entry
 also carries the SHA-256 of its decompressed content.
 

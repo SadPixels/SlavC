@@ -12,7 +12,7 @@ public static class SlavPackConstants
     public const long MaxStoredEntrySize = 1024L * 1024 * 1024;
     public const long MaxOriginalEntrySize = 2L * 1024 * 1024 * 1024;
     public const int RuntimeHostProtocol = 1;
-    public static ReadOnlySpan<byte> Magic => "SLAVPACK\0"u8;
+    public static ReadOnlySpan<byte> Magic => "SLAVPAK\0"u8;
 }
 
 public readonly record struct SlavPackVersion(ushort Major, ushort Minor)
